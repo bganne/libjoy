@@ -1,22 +1,13 @@
-libjoy$=SPACE$(156)
-joy%=VARPTR(libjoy$)
-BLOAD "LIBJOY.INL",joy%
+libjoybuf$=SPACE$(88)
+libjoy%=VARPTR(libjoybuf$)
+BLOAD "LIBJOY.INL",libjoy%
 DO
-  val%=@joy3
-  PRINT "joy3";BIN$(val%,8)
-  val%=@joy4
-  PRINT "joy4";BIN$(val%,8)
+  val%=@joy
+  PRINT "joy";BIN$(val%,16)
 LOOP
-FUNCTION joy3
+FUNCTION joy
   super%=GEMDOS(&H20,L:0)
-  v%=C:joy%()
-  ~GEMDOS(&H20,L:super%)
-  RETURN v%
-ENDFUNC
-FUNCTION joy4
-  super%=GEMDOS(&H20,L:0)
-  addr%=joy%+&H54
-  v%=C:addr%()
+  v%=C:libjoy%()
   ~GEMDOS(&H20,L:super%)
   RETURN v%
 ENDFUNC

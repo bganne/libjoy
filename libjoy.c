@@ -9,39 +9,40 @@
 #define YM2149_R_PORT_A_STROBE		0x20
 #define YM2149_R_MIXER_CTL_PORT_A	0x40
 #define YM2149_R_MIXER_CTL_PORT_B	0x80
-#define MFP_R_ACTIVE_EDGE			(*(volatile unsigned char *)0xfffa01)
+#define MFP_R_PARALLEL				(*(volatile unsigned char *)0xfffa01)
+#define MFP_R_PARALLEL_BUSY			0x1
 
-unsigned char joy_3(void)
+unsigned short joy(void)
 {
 	unsigned short sr;
-	unsigned char dir, fire;
+	unsigned char dir, fire3, fire4;
+
+	/* disable interrupts */
 	asm volatile ("move.w sr, %0\n"
-			"ori #0x700, sr"
-			:"=d"(sr));
+				  "ori #0x700, sr"
+				  :"=d"(sr));
+
+	/* set port A & B in input mode */
 	YM2149_RDRS = YM2149_R_MIXER_CTL;
-	YM2149_WD = YM2149_RDRS & ~YM2149_R_MIXER_CTL_PORT_B;
+	YM2149_WD = YM2149_RDRS & ~(YM2149_R_MIXER_CTL_PORT_A|YM2149_R_MIXER_CTL_PORT_B);
+
+	/* read joystick direction from port B */
 	YM2149_RDRS = YM2149_R_PORT_B;
 	dir = YM2149_RDRS;
-	YM2149_RDRS = YM2149_R_MIXER_CTL;
-	YM2149_WD = YM2149_RDRS & ~YM2149_R_MIXER_CTL_PORT_A;
+
+	/* read fire3 from port A */
 	YM2149_RDRS = YM2149_R_PORT_A;
-	fire = YM2149_RDRS;
-	asm volatile ("move.w %0, sr"::"d"(sr));
-	return (~dir) & 0x0f | (((~fire) & YM2149_R_PORT_A_STROBE) >> 1);
-}
+	fire3 = YM2149_RDRS & YM2149_R_PORT_A_STROBE;
 
-unsigned char joy_4(void)
-{
-	unsigned short sr;
-	unsigned char dir, fire;
-	asm volatile ("move.w sr, %0\n"
-			"ori #0x700, sr"
-			:"=d"(sr));
-	YM2149_RDRS = YM2149_R_MIXER_CTL;
-	YM2149_WD = YM2149_RDRS & ~YM2149_R_MIXER_CTL_PORT_B;
-	YM2149_RDRS = YM2149_R_PORT_B;
-	dir = YM2149_RDRS;
-	fire = MFP_R_ACTIVE_EDGE;
+	/* read fire4 from parallel port */
+	fire4 = MFP_R_PARALLEL & MFP_R_PARALLEL_BUSY;
+
+	/* re-enable interrupts */
 	asm volatile ("move.w %0, sr"::"d"(sr));
-	return (((~dir) & 0xf0) >> 4) | (((~fire) & 0x1) << 4);
+
+	/* combine dir + fire */
+	unsigned short r1 = dir | ((unsigned short)fire3 << 3) | ((unsigned short)fire4 << 9);
+	/* reg values are 0 for active and 1 for inactive, we need to invert the bits pattern */
+	unsigned short r2 = r1 ^ 0x03ff;
+	return r2;
 }

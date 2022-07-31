@@ -5,13 +5,13 @@ PATH:=$(PATH):$(ATARI)/m68k-atari-mint-gcc/bin
 LD_LIBRARY_PATH:=$(ATARI)/m68k-atari-mint-gcc/lib64
 export PATH LD_LIBRARY_PATH
 
-CFLAGS:=-O2 -s -m68000
+CFLAGS:=-O2 -s
 
-BIN:=joystick
+BIN:=libjoy_test
 
 all: $(BIN).tos libjoy.inl
 
-joystick.tos: joystick.c libjoy.o
+$(BIN).tos: $(BIN).c libjoy.o
 	m68k-atari-mint-gcc -I$(LIBCMINI)/include -nostdlib $(LIBCMINI)/build/crt0.o $^ -o $@ $(CFLAGS) -L$(LIBCMINI)/build -lcmini -lgcc
 
 libjoy.o: libjoy.c
@@ -26,4 +26,4 @@ run: $(BIN).tos
 	hatari $<
 
 clean:
-	$(RM) $(BIN).tos *.o
+	$(RM) $(BIN).tos *.o *.inl
