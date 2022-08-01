@@ -1,5 +1,5 @@
 ATARI:=$(HOME)/src/atari
-LIBCMINI:=$(ATARI)/libcmini
+LIBCMINI?=$(ATARI)/libcmini
 GCC:=$(ATARI)/m68k-atari-mint-gcc
 PATH:=$(PATH):$(ATARI)/m68k-atari-mint-gcc/bin
 LD_LIBRARY_PATH:=$(ATARI)/m68k-atari-mint-gcc/lib64
