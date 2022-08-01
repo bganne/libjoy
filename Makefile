@@ -22,7 +22,7 @@ libjoy.inl: libjoy.o
 	ls -l $@
 	m68k-atari-mint-objdump -t $<
 
-run: $(BIN).tos
+run: $(BIN).tos libjoy.inl
 	hatari $<
 
 clean:

@@ -1,4 +1,4 @@
-libjoybuf$=SPACE$(88)
+libjoybuf$=SPACE$(76)
 libjoy%=VARPTR(libjoybuf$)
 BLOAD "LIBJOY.INL",libjoy%
 DO

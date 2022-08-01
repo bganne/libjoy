@@ -4,13 +4,13 @@
 #define YM2149_RDRS					(*(volatile unsigned char *)0xff8800)
 #define YM2149_WD					(*(volatile unsigned char *)0xff8802)
 #define YM2149_R_MIXER_CTL			7
-#define YM2149_R_PORT_A				14
-#define YM2149_R_PORT_B				15
-#define YM2149_R_PORT_A_STROBE		0x20
 #define YM2149_R_MIXER_CTL_PORT_A	0x40
 #define YM2149_R_MIXER_CTL_PORT_B	0x80
+#define YM2149_R_PORT_A				14
+#define YM2149_R_PORT_A_STROBE		0x20
+#define YM2149_R_PORT_B				15
 #define MFP_R_PARALLEL				(*(volatile unsigned char *)0xfffa01)
-#define MFP_R_PARALLEL_BUSY			0x1
+#define MFP_R_PARALLEL_BUSY			0x01
 
 unsigned short joy(void)
 {
@@ -32,17 +32,25 @@ unsigned short joy(void)
 
 	/* read fire3 from port A */
 	YM2149_RDRS = YM2149_R_PORT_A;
-	fire3 = YM2149_RDRS & YM2149_R_PORT_A_STROBE;
+	fire3 = YM2149_RDRS;
 
 	/* read fire4 from parallel port */
-	fire4 = MFP_R_PARALLEL & MFP_R_PARALLEL_BUSY;
+	fire4 = MFP_R_PARALLEL;
 
 	/* re-enable interrupts */
 	asm volatile ("move.w %0, sr"::"d"(sr));
 
 	/* combine dir + fire */
-	unsigned short r1 = dir | ((unsigned short)fire3 << 3) | ((unsigned short)fire4 << 9);
+	union {
+		struct {
+			unsigned char fire;
+			unsigned char dir;
+		};
+		unsigned short as_short;
+	} ret;
+	ret.fire = (fire3 & YM2149_R_PORT_A_STROBE) | (fire4 & MFP_R_PARALLEL_BUSY);
+	ret.dir = dir;
+
 	/* reg values are 0 for active and 1 for inactive, we need to invert the bits pattern */
-	unsigned short r2 = r1 ^ 0x03ff;
-	return r2;
+	return ret.as_short ^ 0x21ff;
 }
