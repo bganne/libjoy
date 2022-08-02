@@ -14,7 +14,7 @@ all: $(BIN).tos libjoy.inl
 $(BIN).tos: $(BIN).c libjoy.o
 	m68k-atari-mint-gcc -I$(LIBCMINI)/include -nostdlib $(LIBCMINI)/build/crt0.o $^ -o $@ $(CFLAGS) -L$(LIBCMINI)/build -lcmini -lgcc
 
-libjoy.o: libjoy.c
+libjoy.o: libjoy.c libjoy.h
 	m68k-atari-mint-gcc -I$(LIBCMINI)/include -pie $< -c -o $@ $(CFLAGS)
 
 libjoy.inl: libjoy.o

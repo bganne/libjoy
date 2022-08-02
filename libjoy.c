@@ -7,10 +7,10 @@
 #define YM2149_R_MIXER_CTL_PORT_A	0x40
 #define YM2149_R_MIXER_CTL_PORT_B	0x80
 #define YM2149_R_PORT_A				14
-#define YM2149_R_PORT_A_STROBE		0x20
+#define YM2149_R_PORT_A_STROBE		5
 #define YM2149_R_PORT_B				15
 #define MFP_R_PARALLEL				(*(volatile unsigned char *)0xfffa01)
-#define MFP_R_PARALLEL_BUSY			0x01
+#define MFP_R_PARALLEL_BUSY			1
 
 unsigned short joy(void)
 {
@@ -48,9 +48,9 @@ unsigned short joy(void)
 		};
 		unsigned short as_short;
 	} ret;
-	ret.fire = (fire3 & YM2149_R_PORT_A_STROBE) | (fire4 & MFP_R_PARALLEL_BUSY);
+	ret.fire = ((fire3 >> YM2149_R_PORT_A_STROBE) | (fire4 << MFP_R_PARALLEL_BUSY)) & 0x3;
 	ret.dir = dir;
 
 	/* reg values are 0 for active and 1 for inactive, we need to invert the bits pattern */
-	return ret.as_short ^ 0x21ff;
+	return ret.as_short ^ 0x03ff;
 }
