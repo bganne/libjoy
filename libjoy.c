@@ -19,8 +19,7 @@ unsigned short joy(void)
 
 	/* disable interrupts */
 	asm volatile ("move.w sr, %0\n"
-				  "ori #0x700, sr"
-				  :"=d"(sr));
+				  "ori #0x700, sr":"=d"(sr)::"memory");
 
 	/* set port A & B in input mode */
 	YM2149_RDRS = YM2149_R_MIXER_CTL;
@@ -38,20 +37,26 @@ unsigned short joy(void)
 	fire4 = MFP_R_PARALLEL;
 
 	/* re-enable interrupts */
-	asm volatile ("move.w %0, sr"::"d"(sr));
+	asm volatile ("move.w %0, sr"::"d"(sr):"memory");
 
 	/* combine dir + fire */
 	union {
 		struct {
-			unsigned char fire;
-			unsigned char dir;
+			unsigned char hi;
+			unsigned char lo;
 		};
 		unsigned short as_short;
 	} ret;
-	/* bit 0 is fire3, bit 1 is fire 4. All other bits are set to 1 (see below) */
-	ret.fire = ((fire3 >> YM2149_R_PORT_A_STROBE) | (fire4 << MFP_R_PARALLEL_BUSY)) | 0xfc;
-	/* copy direction as-is */
-	ret.dir = dir;
+	/* put fire3 and fire4 bits one after the other */
+	ret.hi = fire4;
+	ret.lo = fire3 << 2;
+	/* move them to final position: bit 8 is fire3, bit 9 is fire 4 */
+	ret.as_short <<= 1;
+	/* directions are bits 0-7 */
+	ret.lo = dir;
 	/* reg values are 0 for active and 1 for inactive, we need to invert the bits pattern */
+	/* force all ignored bits to 1 */
+	ret.as_short |= 0xfc00;
+	/* then invert */
 	return ~ret.as_short;
 }
